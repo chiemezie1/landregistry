@@ -1,0 +1,31 @@
+{
+    "name": "landregistry",
+    "version": "1.0.0",
+    "main": "index.js",
+    "repository": "https://github.com/chiemezie1/landregistry.git",
+    "author": "chiemezie Agb0 <chiemezieagbo1@gmail.com>",
+    "description": "Landregistry dapp for cartesi blockchain",
+    "license": "MIT",
+    "private": true,
+    "dependencies": {
+        "@deroll/app": "^0.6.1",
+        "ethers": "^6.7.1",
+        "viem": "^2.9.31"
+      },
+    "devDependencies": {
+        "esbuild": "^0.19.2"
+    },
+    "scripts": {
+        "build": "esbuild ./src/index.js --bundle --outfile=dist/index.js --platform=node --target=node20",
+        "start": "ROLLUP_HTTP_SERVER_URL=\"http://127.0.0.1:8080/rollup\" node src/index.js"
+    },
+    "keywords": [
+        "landregistry",
+        "blockchain",
+        "cartesi",
+        "dapp"
+    ],
+    "engines": {
+        "node": "20.x"
+    }
+}
