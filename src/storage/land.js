@@ -1,4 +1,6 @@
 class LandStorage {
+    lands;
+
     constructor() {
         this.lands = new Map();
     }

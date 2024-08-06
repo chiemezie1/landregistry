@@ -1,77 +1,77 @@
-import { createApp } from "@deroll/app";
-import { hexToString } from "viem";
-import { LandController } from "./src/controller/land";
+import { ROLLUP_SERVER } from './shared/config';
+import { hexToString, getAddress } from 'viem';
+import { RollupStateHandler } from './shared/rollup-state-handler';
+import { controller } from './controller';
 
-const app = createApp({ url: process.env.ROLLUP_HTTP_SERVER_URL || "http://127.0.0.1:5004" });
-const landController = new LandController();
+const rollup_server = ROLLUP_SERVER;
+console.log('HTTP rollup_server url is ' + rollup_server);
 
-app.addAdvanceHandler(async ({ metadata, payload }) => {
-    const payloadString = hexToString(payload);
-    console.log("Received advance payload:", payloadString);
-    const jsonPayload = JSON.parse(payloadString);
-    const sender = metadata.msg_sender;
-    const action = jsonPayload.method;
-    const data = jsonPayload.data;
+async function handle_advance(data) {
+    console.log('Received advance raw data ->', JSON.stringify(data));
+    const payloadRaw = hexToString(data.payload);
+    const payload = JSON.parse(payloadRaw);
+    const requestedAction = payload.method;
+    const providedData = payload.data;
 
-    try {
-        let response;
-        switch (action) {
-            case "createLand":
-                response = await landController.createLand(data, sender);
-                break;
-            case "saleLand":
-                response = await landController.saleLand(data, sender);
-                break;
-            case "putLandOnSale":
-                response = await landController.putLandOnSale(data, sender);
-                break;
-            case "removeLandFromSale":
-                response = await landController.removeLandFromSale(data, sender);
-                break;
-            case "updateLandDetails":
-                response = await landController.updateLandDetails(data, sender);
-                break;
-            default:
-                response = { error: `Unknown action: ${action}` };
-                break;
-        }
-        console.log("Action response:", response);
-        return "accept";
-    } catch (error) {
-        console.error("Error handling advance:", error);
-        return "reject";
+    const action = controller[requestedAction];
+
+    if (!action) {
+        return await RollupStateHandler.handleReport({
+            error: `Action '${requestedAction}' not allowed.`,
+        });
     }
-});
 
-app.addInspectHandler(async ({ payload }) => {
-    const payloadString = hexToString(payload);
-    console.log("Received inspect payload:", payloadString);
-    const jsonPayload = JSON.parse(payloadString);
-    const action = jsonPayload.method;
-    const data = jsonPayload.data;
+    const controllerResponse = await action(providedData);
 
-    try {
-        let response;
-        switch (action) {
-            case "getLandDetails":
-                response = await landController.getLandDetails(data);
-                break;
-            case "getAllLand":
-                response = await landController.getAllLand();
-                break;
-            default:
-                response = { error: `Unknown action: ${action}` };
-                break;
-        }
-        console.log("Inspect response:", response);
-        return response;
-    } catch (error) {
-        console.error("Error handling inspect:", error);
-        return { error: error.message };
+    return controllerResponse;
+}
+
+async function handle_inspect(data) {
+    console.log('Received inspect raw data ->', JSON.stringify(data));
+    const payloadRaw = hexToString(data.payload);
+    const payload = JSON.parse(payloadRaw);
+    const requestedAction = payload.method;
+    const providedData = payload.data;
+
+    const action = controller[requestedAction];
+
+    if (!action) {
+        return await RollupStateHandler.handleReport({
+            error: `Action '${requestedAction}' not allowed.`,
+        });
     }
-});
 
-app.start().catch((e) => {
-    console.error(e);
-    process.exit(1);
-});
+    const controllerResponse = await action(providedData);
+
+    return controllerResponse;
+}
+
+var handlers = {
+    advance_state: handle_advance,
+    inspect_state: handle_inspect,
+};
+
+(async () => {
+    while (true) {
+        const finish_req = await fetch(rollup_server + '/finish', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: 'accept' }),
+        });
+
+        console.log('Received finish status ' + finish_req.status);
+
+        if (finish_req.status == 202) {
+            console.log('No pending rollup request, trying again');
+        } else {
+            const rollup_req = await finish_req.json();
+            var handler = handlers[rollup_req['request_type']];
+            const finishStatus = await handler(rollup_req['data']);
+            if (finishStatus.status === 'reject') {
+                console.error('Handler rejected the request:', finishStatus);
+            }
+        }
+    }
+})();
