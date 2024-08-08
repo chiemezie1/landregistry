@@ -48,7 +48,7 @@ npm install -g @cartesi/cli
 1. Clone the repository:
     
     ```
-    git clone https://github.com/chiemezie1/land-registry-dapp.git
+    git clone  https://github.com/chiemezie1/landregistry.git
     cd land-registry-dapp
     ```
     
