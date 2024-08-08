@@ -48,7 +48,7 @@ npm install -g @cartesi/cli
 1. Clone the repository:
     
     ```
-    git clone https://github.com/your-repo-url/land-registry-dapp.git
+    git clone https://github.com/chiemezie1/land-registry-dapp.git
     cd land-registry-dapp
     ```
     
@@ -146,19 +146,19 @@ Open a new terminal window to send requests to the Cartesi rollup server.
 Here's an overview of the project structure:
 
 ```
-.
-├── controller
-│   ├── index.js
-│   ├── land.js
-├── model
-│   ├── land.js
-├── shared
-│   ├── config.js
-│   ├── rollup-state-handler.js
-├── storage
-│   ├── land.js
-├── index.js
-└── README.md
+ src
+    ├── controller
+    │   ├── index.js
+    │   ├── land.js
+    ├── model
+    │   ├── land.js
+    ├── shared
+    │   ├── config.js
+    │   ├── rollup-state-handler.js
+    ├── storage
+    │   ├── land.js
+    ├── index.js
+    └── README.md
 
 ```
 
